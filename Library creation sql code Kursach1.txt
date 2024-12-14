@@ -1,0 +1,301 @@
+--Создание таблиц
+
+CREATE TABLE admins (
+  PK_admin_id NUMBER(11) NOT NULL,
+  admin_name NVARCHAR2(255) NOT NULL,
+  admin_login VARCHAR2(255) NOT NULL,
+  admin_password_hash VARCHAR2(255) NOT NULL,
+  PRIMARY KEY (PK_admin_id)
+);
+
+CREATE TABLE authors (
+  PK_author_id NUMBER(11) NOT NULL,
+  author_name NVARCHAR2(255) NOT NULL,
+  author_description NVARCHAR2(4000),
+  PRIMARY KEY (PK_author_id)
+);
+COMMENT ON COLUMN authors.author_description IS 'Описание автора.';
+
+CREATE TABLE books (
+  PK_book_id NUMBER(11) NOT NULL,
+  book_title NVARCHAR2(255) NOT NULL,
+  book_available_copies NUMBER(11),
+  book_total_copies NUMBER(11),
+  book_digital_available NUMBER(1) DEFAULT 0 CHECK (book_digital_available IN (0, 1)),
+  book_decription NVARCHAR2(255),
+  FK_author_id NUMBER(11),
+  PRIMARY KEY (PK_book_id)
+);
+COMMENT ON COLUMN books.book_available_copies IS 'Количество доступных для выдачи копий.';
+COMMENT ON COLUMN books.book_total_copies IS 'Общее количество копий книги.';
+COMMENT ON COLUMN books.book_digital_available IS 'Наличие цифровой версии книги (1 true/ 0 false). digital_available NUMBER(1) DEFAULT 0
+';
+COMMENT ON COLUMN books.book_decription IS 'Описание книги.';
+COMMENT ON COLUMN books.FK_author_id IS 'Ссылка на автора книги.';
+
+CREATE TABLE digital_books (
+  PK_digital_book_id NUMBER(11) NOT NULL,
+  FK_digital_book_id NUMBER(11) NOT NULL,
+  digital_book_file_path VARCHAR2(4000),
+  digital_book_upload_date DATE DEFAULT SYSDATE,
+  PRIMARY KEY (PK_digital_book_id)
+);
+COMMENT ON COLUMN digital_books.digital_book_file_path IS 'Путь к цифровому файлу книги.';
+
+CREATE TABLE books_genres (
+  FK_book_id NUMBER(11) NOT NULL,
+  FK_genre_id NUMBER(11) NOT NULL
+);
+COMMENT ON COLUMN books_genres.FK_book_id IS 'Ссылка на книгу.';
+COMMENT ON COLUMN books_genres.FK_genre_id IS 'Ссылка на жанр.';
+
+CREATE TABLE digital_issues (
+  PK_digital_id NUMBER(11) NOT NULL,
+  FK_book_id NUMBER(11),
+  FK_reader_id NUMBER(11),
+  digital_issue_date DATE,
+  PRIMARY KEY (PK_digital_id)
+);
+COMMENT ON COLUMN digital_issues.PK_digital_id IS 'Уникальный идентификатор выдачи цифровой копии.';
+COMMENT ON COLUMN digital_issues.FK_book_id IS 'Ссылка на книгу.';
+COMMENT ON COLUMN digital_issues.FK_reader_id IS 'Ссылка на читателя.';
+COMMENT ON COLUMN digital_issues.digital_issue_date IS 'Дата выдачи цифровой копии.';
+
+CREATE TABLE employees (
+  PK_employee_id NUMBER(11) NOT NULL,
+  employee_name NVARCHAR2(255) NOT NULL,
+  employee_position NVARCHAR2(255),
+  employee_contact VARCHAR2(255),
+  employee_login VARCHAR2(255) NOT NULL,
+  employee_password_hash VARCHAR2(255) NOT NULL,
+  PRIMARY KEY (PK_employee_id)
+);
+COMMENT ON COLUMN employees.employee_position IS 'Должность сотрудника.';
+COMMENT ON COLUMN employees.employee_contact IS 'Контактные данные сотрудника ';
+COMMENT ON COLUMN employees.employee_login IS 'Уникальный логин сотрудника.';
+COMMENT ON COLUMN employees.employee_password_hash IS 'Хэшированный пароль сотрудника.';
+
+CREATE TABLE fines (
+  PK_fine_id NUMBER(11) NOT NULL,
+  FK_reader_id NUMBER(11) NOT NULL,
+  fine_amount NUMBER(11),
+  fine_date DATE,
+  fine_status VARCHAR2(255),
+  PRIMARY KEY (PK_fine_id)
+);
+COMMENT ON COLUMN fines.FK_reader_id IS 'Ссылка на читателя.';
+COMMENT ON COLUMN fines.fine_amount IS 'Сумма штрафа.';
+COMMENT ON COLUMN fines.fine_date IS '	Дата начисления штрафа.';
+COMMENT ON COLUMN fines.fine_status IS 'Статус штрафа unpaid, paid';
+
+CREATE TABLE genres (
+  PK_genre_id NUMBER(11) NOT NULL,
+  genre_name NVARCHAR2(255),
+  PRIMARY KEY (PK_genre_id)
+);
+COMMENT ON COLUMN genres.genre_name IS 'Название жанра.';
+
+CREATE TABLE readers (
+  PK_reader_id NUMBER(11),
+  reader_name NVARCHAR2(255),
+  reader_email VARCHAR2(255),
+  reader_phone VARCHAR2(255),
+  reader_registration_date DATE,
+  reader_login VARCHAR2(255) NOT NULL,
+  reader_password_hash VARCHAR2(255) NOT NULL,
+  reader_status VARCHAR2(255),
+  PRIMARY KEY (PK_reader_id)
+);
+COMMENT ON COLUMN readers.reader_name IS 'Имя читателя.';
+COMMENT ON COLUMN readers.reader_email IS 'Электронная почта читателя (уникальная).';
+COMMENT ON COLUMN readers.reader_phone IS 'Телефон читателя';
+COMMENT ON COLUMN readers.reader_registration_date IS 'Дата регистрации читателя.';
+COMMENT ON COLUMN readers.reader_login IS 'Уникальный логин читателя.';
+COMMENT ON COLUMN readers.reader_password_hash IS 'Хэшированный пароль.';
+COMMENT ON COLUMN readers.reader_status IS 'Статус читателя active, blocked';
+
+CREATE TABLE reservations (
+  PK_reservation_id NUMBER NOT NULL,
+  FK_book_id NUMBER(11),
+  FK_reader_id NUMBER(11),
+  reservation_order_date DATE,
+  reservation_return_date DATE,
+  reservation_duration NUMBER(1) CHECK (reservation_duration BETWEEN 1 AND 3),
+  FK_employee_id NUMBER(11),
+  reservation_status VARCHAR2(25),
+  PRIMARY KEY (PK_reservation_id)
+);
+COMMENT ON COLUMN reservations.PK_reservation_id IS 'Уникальный идентификатор предзаказа.';
+COMMENT ON COLUMN reservations.FK_book_id IS 'Ссылка на книгу.';
+COMMENT ON COLUMN reservations.FK_reader_id IS 'Ссылка на читателя.';
+COMMENT ON COLUMN reservations.reservation_order_date IS 'Дата оформления предзаказа.';
+COMMENT ON COLUMN reservations.reservation_return_date IS 'Дата, до которой книга должна быть возвращена.';
+COMMENT ON COLUMN reservations.reservation_duration IS 'Срок использования книги (1, 2 или 3 дня).';
+COMMENT ON COLUMN reservations.FK_employee_id IS 'ID сотрудника, подтвердившего возврат.';
+COMMENT ON COLUMN reservations.reservation_status IS 'Статус предзаказа waiting, given, returned';
+
+------------------------------------------------------------------------------------------------------------------------ 
+
+--Добавление ключей
+
+ALTER TABLE books ADD CONSTRAINT relation_books_authors_1 FOREIGN KEY (FK_author_id) REFERENCES authors (PK_author_id);
+ALTER TABLE books_genres ADD CONSTRAINT relation_books_genres_books_1 FOREIGN KEY (FK_book_id) REFERENCES books (PK_book_id);
+ALTER TABLE books_genres ADD CONSTRAINT relation_books_genres_genres_2 FOREIGN KEY (FK_genre_id) REFERENCES genres (PK_genre_id);
+ALTER TABLE digital_books ADD CONSTRAINT relation_digital_books_books_1 FOREIGN KEY (FK_digital_book_id) REFERENCES books (PK_book_id);
+ALTER TABLE digital_issues ADD CONSTRAINT relation_digital_issues_books_1 FOREIGN KEY (FK_book_id) REFERENCES books (PK_book_id);
+ALTER TABLE digital_issues ADD CONSTRAINT relation_digital_issues_readers_2 FOREIGN KEY (FK_reader_id) REFERENCES readers (PK_reader_id);
+ALTER TABLE fines ADD CONSTRAINT relation_fines_readers_1 FOREIGN KEY (FK_reader_id) REFERENCES readers (PK_reader_id);
+ALTER TABLE reservations ADD CONSTRAINT relation_reservations_books_1 FOREIGN KEY (FK_book_id) REFERENCES books (PK_book_id);
+ALTER TABLE reservations ADD CONSTRAINT relation_reservations_readers_2 FOREIGN KEY (FK_reader_id) REFERENCES readers (PK_reader_id);
+ALTER TABLE reservations ADD CONSTRAINT relation_reservations_employees_3 FOREIGN KEY (FK_employee_id) REFERENCES employees (PK_employee_id);
+
+------------------------------------------------------------------------------------------------------------------------ 
+
+--Добавление писателей
+
+DECLARE
+    large_text CLOB;
+BEGIN
+    large_text := '';
+    INSERT INTO authors (pk_author_id, author_name, author_description)
+    VALUES (10, 'Антон Павлович Чехов', large_text);
+END;
+
+------------------------------------------------------------------------------------------------------------------------ 
+
+--Добавление администратора
+
+INSERT INTO admins (PK_admin_id, admin_name, admin_login, admin_password_hash)
+VALUES ( 1, 'азиз', 'admin', 
+    STANDARD_HASH('admin', 'SHA256')); -- Хэширование пароля "admin" алгоритмом SHA-256
+
+------------------------------------------------------------------------------------------------------------------------ 
+
+-- добавление работника
+
+INSERT INTO employees (PK_employee_id, employee_name, employee_position, employee_contact, employee_login, employee_password_hash)
+VALUES (1, 'женя', 'библиотекарь', '+998901234567', 'employee1', 
+    STANDARD_HASH('employee1', 'SHA256'));
+
+------------------------------------------------------------------------------------------------------------------------ 
+
+-- добавление пользователя
+
+INSERT INTO readers (PK_reader_id, reader_name, reader_email, reader_phone, reader_registration_date, reader_login, reader_password_hash, reader_status)
+VALUES (1, 'егор', null, null, TO_DATE('2024/12/2 21:02:44', 'yyyy/mm/dd hh24:mi:ss'), 'user1', 
+    STANDARD_HASH('user1', 'SHA256'), 'active');
+
+------------------------------------------------------------------------------------------------------------------------ 
+
+-- добавление книги
+
+INSERT INTO books (PK_book_id, book_title, book_available_copies, book_total_copies, book_description, FK_author_id)
+VALUES (1, 'война и мир', 10, 10, 'История войны и мира, ', 1);
+
+-------------------------------------------------------------------------------------------------------------------------
+
+-- процедура которая проверяет таблицу reservations на наличие просроченных дат и если таковы есть, то зачисляет штраф пользователю и блокирует аккаунт
+
+CREATE OR REPLACE PROCEDURE apply_penalties AS
+BEGIN
+    FOR overdue IN (
+        SELECT r.FK_reader_id, r.PK_reservation_id, r.reservation_status, 
+               TRUNC(SYSDATE) - TRUNC(r.reservation_return_date) AS overdue_days
+        FROM reservations r
+        WHERE r.reservation_return_date < SYSDATE
+          AND NOT EXISTS (
+              SELECT 1 FROM fines f
+              WHERE f.FK_reader_id = r.FK_reader_id
+                AND f.fine_date = TRUNC(SYSDATE)
+          )
+    ) LOOP
+        -- Проверка, что reservation_status не равен 'returned'
+        IF overdue.reservation_status != 'returned' THEN
+            -- Рассчитываем штраф (например, 5000 за день просрочки)
+            INSERT INTO fines (FK_reader_id, fine_amount, fine_date, fine_status)
+            VALUES (overdue.FK_reader_id, overdue.overdue_days * 5000, SYSDATE, 'unpaid');
+
+            -- Блокировка пользователя
+            UPDATE readers
+            SET reader_status = 'blocked'
+            WHERE PK_reader_id = overdue.FK_reader_id;
+        END IF;
+    END LOOP;
+END;
+
+
+-------------------------------------------------------------------------------------------------------------------------
+
+-- инструмент расписания оракл. Его задача каждый день в 01:00 вызывать процедуру apply_penalties
+
+BEGIN
+    DBMS_SCHEDULER.CREATE_JOB (
+        job_name        => 'apply_penalties_job',
+        job_type        => 'PLSQL_BLOCK',
+        job_action      => 'BEGIN apply_penalties; END;',
+        start_date      => SYSDATE, -- Начало выполнения (текущая дата и время)
+        repeat_interval => 'FREQ=DAILY; BYHOUR=1;', -- Каждые 12 часов
+        enabled         => TRUE
+    );
+END;
+
+-------------------------------------------------------------------------------------------------------------------------
+
+-- триггер который автоматически расчитывает и вставляет дату возврата книги после бронирования
+
+CREATE OR REPLACE TRIGGER trg_set_reservation_return_date
+BEFORE INSERT OR UPDATE ON reservations
+FOR EACH ROW
+BEGIN
+    :NEW.RESERVATION_RETURN_DATE := :NEW.RESERVATION_ORDER_DATE + :NEW.RESERVATION_DURATION;
+END;
+
+-------------------------------------------------------------------------------------------------------------------------
+
+-- последовательность и триггер, которые автоматически вставляют номер id в таблице штрафов. Аналог автоинкремента.
+
+CREATE SEQUENCE fines_seq
+START WITH 1
+INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER trg_fines_id
+BEFORE INSERT ON fines
+FOR EACH ROW
+BEGIN
+    IF :NEW.PK_FINE_ID IS NULL THEN
+        :NEW.PK_FINE_ID := fines_seq.NEXTVAL;
+    END IF;
+END;
+
+-------------------------------------------------------------------------------------------------------------------------
+
+-- триггер используется для автоматического возвращения статуса 'active' для пользователя, после того, как оплата штрафа подтвердится.
+Но если книга еще не возвращена триггер не вернет активный статус.
+
+CREATE OR REPLACE TRIGGER trg_update_reader_status
+AFTER UPDATE OF fine_status ON fines
+FOR EACH ROW
+DECLARE
+    v_reservation_status VARCHAR2(50);
+BEGIN
+    SELECT reservation_status
+    INTO v_reservation_status
+    FROM reservations
+    WHERE FK_reader_id = :NEW.FK_reader_id
+      AND PK_reservation_id = (SELECT PK_reservation_id 
+                                FROM reservations 
+                                WHERE FK_reader_id = :NEW.FK_reader_id 
+                                AND rownum = 1); -- читатель может иметь несколько бронирований
+
+    IF :NEW.fine_status = 'paid' AND v_reservation_status = 'returned' THEN
+        
+	UPDATE readers
+        SET reader_status = 'active'
+        WHERE PK_reader_id = :NEW.FK_reader_id;
+    END IF;
+END;
+
+-------------------------------------------------------------------------------------------------------------------------
+
+--
+

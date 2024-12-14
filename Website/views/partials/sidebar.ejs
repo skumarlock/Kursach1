@@ -1,0 +1,12 @@
+<link rel="stylesheet" href="/css/style.css">
+
+<div class="col-md-3">
+    <h4>Жанры</h4>
+    <ul class="list-group">
+        <% genres.forEach(genre => { %>
+            <li class="list-unstyled">
+                <a href="/genre/<%= genre %>"><%= genre %></a>
+            </li>
+        <% }); %>
+    </ul>
+</div>

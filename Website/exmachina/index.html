@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Библиотека - Главная</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Пользовательские стили -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Навигационная панель -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="http://localhost:3000/">
+            <img src="images/logo.png" alt="Логотип" style="height: 50px;">
+        </a>
+        <form class="d-flex me-auto" id="search-form">
+            <input class="form-control me-2" type="search" placeholder="Найти книгу" id="search-input">
+            <button class="btn btn-outline-light" type="submit">Поиск</button>
+        </form>
+        <div id="auth-buttons" class="d-flex">
+            <a href="register.html" id="register-btn" class="btn btn-outline-light me-2">Регистрация</a>
+            <a href="login.html" id="login-btn" class="btn btn-outline-light me-2">Войти</a>
+            <button id="logout-btn" class="btn btn-outline-light" style="display: none;">Выйти</button>
+        </div>
+    </div>
+</nav>
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <!-- Сайдбар с жанрами -->
+            <aside class="col-md-3 bg-light p-3">
+                <h5>Жанры</h5>
+                <ul class="list-unstyled" id="genre-list">
+                    <!-- Жанры будут загружены с сервера -->
+                </ul>
+            </aside>
+
+            <!-- Контент -->
+            <main class="col-md-9">
+                <div class="row g-3" id="books-container">
+                    <!-- Карточки книг будут загружены динамически -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+
+<!-- Модальное окно -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loginModalLabel">Требуется вход</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <p>Сначала войдите в аккаунт, чтобы увидеть подробную информацию.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button id="goToLogin" type="button" class="btn btn-primary">Войти</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Скрипты -->
+    <script>
+        // Загрузка жанров и книг при загрузке страницы
+        $(document).ready(() => {
+            loadGenres();
+            loadBooks();
+
+            // Поиск книг
+            $('#search-form').on('submit', function (e) {
+                e.preventDefault();
+                const searchQuery = $('#search-input').val();
+                loadBooks(searchQuery);
+            });
+        });
+
+        // Функция для загрузки жанров
+function loadGenres() {
+    $.ajax({
+        url: '/api/genres',
+        method: 'GET',
+        success: function (genres) {
+            const genreList = $('#genre-list');
+            genreList.empty();
+            genres.forEach(genre => {
+                // Генерируем ссылку на страницу жанра
+                genreList.append(`<li><a href="/genre/${genre}" class="text-decoration-none">${genre}</a></li>`);
+            });
+        },
+        error: function (err) {
+            console.error('Ошибка загрузки жанров:', err);
+        }
+    });
+}
+
+// Функция для загрузки книг
+function loadBooks(searchQuery = '') {
+    const url = searchQuery ? `/api/books?search=${searchQuery}` : '/api/books';
+    $.ajax({
+        url: url,
+        method: 'GET',
+        success: function (books) {
+            const container = $('#books-container');
+            container.empty();
+            books.forEach(book => {
+               container.append(`
+    <div class="col-md-3">
+        <div class="card h-100">
+            <img src="${book.image}" class="card-img-top" alt="Обложка книги">
+            <div class="card-body">
+                <h6 class="card-title">${book.title}</h6>
+                <p class="card-text">Автор: <a href="/author.html?authorId=${book.authorId}">${book.author}</a></p>
+
+                <a href="/book_page.html?id=${book.id}" class="btn btn-primary">Подробнее</a>
+            </div>
+        </div>
+    </div>
+`);
+
+            });
+
+            // Добавляем обработчики кнопок "Подробнее"
+            attachDetailsButtonHandlers();
+        },
+        error: function (err) {
+            console.error('Ошибка загрузки данных книг:', err);
+        }
+    });
+}
+// Проверка, авторизован ли пользователь
+function isAuthenticated() {
+    return localStorage.getItem('isLoggedIn') === 'true';
+}
+
+// Подключение обработчиков к кнопкам "Подробнее"
+function attachDetailsButtonHandlers() {
+    $('.details-button').on('click', function () {
+        const bookId = $(this).data('id');
+        if (!isAuthenticated()) {
+            // Если пользователь не авторизован, показываем модальное окно
+            const modal = new bootstrap.Modal(document.getElementById('loginModal'));
+            modal.show();
+        } else {
+            // Перенаправляем на страницу книги
+            window.location.href = `/book/${bookId}`;
+        }
+    });
+}
+
+// Обработчик для кнопки "Войти" в модальном окне
+$('#goToLogin').on('click', function () {
+    window.location.href = '/login.html';
+});
+ // Функция для управления отображением кнопок
+    function updateAuthButtons() {
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        if (isLoggedIn) {
+            // Если пользователь авторизован
+            loginBtn.style.display = 'none';
+            registerBtn.style.display = 'none';
+            logoutBtn.style.display = 'inline-block';
+        } else {
+            // Если пользователь не авторизован
+            loginBtn.style.display = 'inline-block';
+            registerBtn.style.display = 'inline-block';
+            logoutBtn.style.display = 'none';
+        }
+    }
+
+    // Обработчик кнопки "Выйти"
+    document.getElementById('logout-btn').addEventListener('click', () => {
+        localStorage.setItem('isLoggedIn', 'false'); // Сбрасываем статус авторизации
+        updateAuthButtons(); // Обновляем отображение кнопок
+    });
+
+    // Убедитесь, что авторизация обновляется при загрузке страницы
+    document.addEventListener('DOMContentLoaded', updateAuthButtons);
+    </script>
+</body>
+</html>

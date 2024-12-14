@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация</title>
+        <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        .container h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #212529;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .success {
+            color: green;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+ <div class="btn btn-outline-light me-2" style="position: fixed; top: 10px; left: 10px; width: 80px; padding: 5px 10px; font-size: 14px; text-align: center;">
+    <a href="index.html" style="text-decoration: none; color: inherit; display: block;">Назад</a>
+</div>
+
+<div class="container">
+    <h1>Регистрация</h1>
+    <form id="register-form">
+        <div class="form-group">
+            <label for="name">Имя</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-group">
+            <label for="login">Логин</label>
+            <input type="text" id="login" name="login" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Пароль</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit" class="btn">Зарегистрироваться</button>
+        <div align="center" style="margin-top: 10px;">
+            <a href="login.html">Уже есть аккаунт? Войдите.</a>
+        </div>
+    </form>
+    <div id="message" class="error" style="display: none;"></div>
+</div>
+
+    <script>
+        document.getElementById('register-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const login = document.getElementById('login').value;
+            const password = document.getElementById('password').value;
+            const query = `
+    INSERT INTO readers (
+        PK_reader_id, reader_name, reader_login, reader_password_hash, reader_status, reader_registration_date
+    ) VALUES (
+        readers_seq.NEXTVAL, :name, :login, STANDARD_HASH(:password, 'SHA256'), 'active', SYSDATE
+    )`;
+
+            try {
+                const response = await fetch('http://localhost:3000/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, login, password })
+                });
+
+                const result = await response.json();
+
+                const messageElement = document.getElementById('message');
+                if (result.success) {
+                    messageElement.textContent = result.message;
+                    messageElement.className = 'success';
+                    messageElement.style.display = 'block';
+                } else {
+                    messageElement.textContent = result.message || 'Ошибка регистрации';
+                    messageElement.className = 'error';
+                    messageElement.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                const messageElement = document.getElementById('message');
+                messageElement.textContent = 'Ошибка подключения к серверу';
+                messageElement.className = 'error';
+                messageElement.style.display = 'block';
+            }
+        });
+                const result = await response.json();
+
+        if (response.ok && result.success) {
+            // Перенаправление на index.html при успешном логине
+            window.location.href = 'http://localhost:3000/login.html';
+        } else {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = result.message || 'Ошибка при регистрации.';
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = 'Ошибка подключения к серверу.';
+    }
+});
+
+    </script>
+</body>
+</html>
